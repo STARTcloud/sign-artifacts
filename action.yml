@@ -1,0 +1,53 @@
+name: Sign artifacts
+description: Signs Windows executables, installers and PowerShell scripts with Azure Artifact Signing through the calling workflow's OIDC token
+inputs:
+  files:
+    description: Comma or newline separated absolute paths of the files to sign
+    required: true
+  tenant-id:
+    description: The Entra tenant id
+    required: true
+  client-id:
+    description: The app registration's client id that holds the federated credential for this repository
+    required: true
+  subscription-id:
+    description: The subscription that holds the signing account
+    required: true
+  endpoint:
+    description: The signing account's regional endpoint
+    required: true
+  account:
+    description: The signing account name
+    required: true
+  profile:
+    description: The certificate profile name
+    required: true
+  description:
+    description: The description written into every signature
+    required: false
+    default: ''
+  description-url:
+    description: The URL written into every signature
+    required: false
+    default: ''
+runs:
+  using: composite
+  steps:
+    - uses: azure/login@v2
+      with:
+        client-id: ${{ inputs.client-id }}
+        tenant-id: ${{ inputs.tenant-id }}
+        subscription-id: ${{ inputs.subscription-id }}
+    - uses: azure/artifact-signing-action@v2.0.0
+      with:
+        endpoint: ${{ inputs.endpoint }}
+        signing-account-name: ${{ inputs.account }}
+        certificate-profile-name: ${{ inputs.profile }}
+        files: ${{ inputs.files }}
+        file-digest: SHA256
+        timestamp-rfc3161: http://timestamp.acs.microsoft.com
+        timestamp-digest: SHA256
+        description: ${{ inputs.description }}
+        description-url: ${{ inputs.description-url }}
+        exclude-environment-credential: true
+        exclude-azure-cli-credential: false
